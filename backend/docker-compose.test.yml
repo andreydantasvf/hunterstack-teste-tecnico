@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: postgres-test-ws-work
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: test_db
+    ports:
+      - '5433:5432'
+    command: postgres -c log_statement=all -c log_destination=stderr
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U test -d test_db']
+      interval: 10s
+      timeout: 5s
+      retries: 5

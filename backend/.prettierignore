@@ -1,0 +1,7 @@
+!.jest
+build
+dist
+coverage
+node_modules
+prisma
+generated
