@@ -23,8 +23,9 @@ export class AIService {
 
   constructor() {
     if (!process.env.OPENAI_API_KEY) {
-      throw new Error(
-        'OPENAI_API_KEY não está configurada nas variáveis de ambiente'
+      throw new AppError(
+        'OPENAI_API_KEY não está configurada nas variáveis de ambiente',
+        500
       );
     }
 
@@ -139,7 +140,7 @@ export class AIService {
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-        throw new Error('Formato de resposta inválido');
+        throw new AppError('Formato de resposta inválido', 500);
       }
 
       const parsed = JSON.parse(jsonMatch[0]);
