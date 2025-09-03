@@ -1,9 +1,10 @@
 import { errorHandler } from '@/core/webserver/error-handler';
 import App from '@/core/webserver/app';
 import { env } from '@/core/config/env';
+import { PoliciesRoutes } from './modules/policies/policies.routes';
 
 export const app = new App({
-  routes: []
+  routes: [PoliciesRoutes]
 });
 
 errorHandler(app.getApp());

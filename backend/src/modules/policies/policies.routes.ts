@@ -9,7 +9,7 @@ import {
 } from './policies.schema';
 
 export class PoliciesRoutes {
-  public prefix_route = 'policies';
+  public prefix_route = '/policies';
   private controller: PoliciesController;
 
   constructor() {

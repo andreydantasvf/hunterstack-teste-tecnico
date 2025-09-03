@@ -5,12 +5,22 @@ export const policySchema = z.object({
   title: z
     .string()
     .min(1, 'Título é obrigatório')
-    .max(500, 'Título muito longo'),
-  source_url: z.string().url('URL inválida'),
-  content: z.string().min(1, 'Conteúdo é obrigatório'),
-  category: z.string().min(1, 'Categoria é obrigatória'),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
+    .max(500, 'Título muito longo')
+    .describe('Título da política de privacidade'),
+  source_url: z
+    .string()
+    .url('URL inválida')
+    .describe('URL de origem da política'),
+  content: z
+    .string()
+    .min(1, 'Conteúdo é obrigatório')
+    .describe('Conteúdo da política'),
+  category: z
+    .string()
+    .min(1, 'Categoria é obrigatória')
+    .describe('Categoria da política'),
+  createdAt: z.date().optional().describe('Data de criação da política'),
+  updatedAt: z.date().optional().describe('Data de atualização da política'),
   method: z.enum(['axios', 'puppeteer']).optional()
 });
 
@@ -38,7 +48,7 @@ export const updatePolicySchema = z.object({
 });
 
 export const policyIdSchema = z.object({
-  id: z.string().uuid('ID deve ser um UUID válido')
+  id: z.string().uuid('ID deve ser um UUID válido').describe('ID da política')
 });
 
 export const policyQuerySchema = z.object({
@@ -55,13 +65,13 @@ export const policyQuerySchema = z.object({
 });
 
 export const policyResponseSchema = z.object({
-  success: z.literal(true),
+  success: z.literal(true).describe('Indica se a resposta foi bem-sucedida'),
   data: policySchema
 });
 
 export const policiesListResponseSchema = z.object({
-  success: z.literal(true),
-  data: z.array(policySchema),
+  success: z.literal(true).describe('Indica se a resposta foi bem-sucedida'),
+  data: z.array(policySchema).describe('Lista de políticas de privacidade'),
   pagination: z
     .object({
       page: z.number().int().min(1),
@@ -70,4 +80,5 @@ export const policiesListResponseSchema = z.object({
       totalPages: z.number().int().min(0)
     })
     .optional()
+    .describe('Informações de paginação, se aplicável')
 });
