@@ -1,10 +1,10 @@
-import OpenAI from 'openai';
+import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import { AIClassificationResult } from './ai.types';
 import { AppError } from '@/core/webserver/app-error';
-import { delay } from '@/utils/delay-function';
 
 export class AIService {
-  private openai: OpenAI;
+  private genAI: GoogleGenerativeAI;
+  private model: GenerativeModel;
 
   private readonly categories = [
     'DADOS PESSOAIS GERAIS',
@@ -22,15 +22,16 @@ export class AIService {
   ];
 
   constructor() {
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.GOOGLE_AI_API_KEY) {
       throw new AppError(
-        'OPENAI_API_KEY não está configurada nas variáveis de ambiente',
+        'GOOGLE_AI_API_KEY não está configurada nas variáveis de ambiente',
         500
       );
     }
 
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
+    this.genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+    this.model = this.genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash-lite'
     });
   }
 
@@ -41,38 +42,19 @@ export class AIService {
     try {
       const prompt = this.buildClassificationPrompt(content, title);
 
-      const completion = await this.openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content:
-              'Você é um especialista em análise de políticas de privacidade e proteção de dados. Sua tarefa é classificar o conteúdo fornecido em uma das categorias pré-definidas.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 500
-      });
+      const result = await this.model.generateContent(prompt);
+      const response = result.response.text();
 
-      const response = completion.choices[0]?.message?.content;
       if (!response) {
-        throw new AppError('Resposta vazia da API OpenAI', 500);
+        throw new AppError('Resposta vazia da API Google Gemini', 500);
       }
 
       return this.parseAIResponse(response);
     } catch (error) {
-      // eslint-disable-next-line
-      console.log(
-        `Erro ao classificar conteúdo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      throw new AppError(
+        `Erro ao classificar conteúdo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+        500
       );
-      return {
-        category: 'OUTROS',
-        confidence: 0
-      };
     }
   }
 
@@ -85,6 +67,8 @@ export class AIService {
       .join('\n');
 
     return `
+      Você é um especialista em análise de políticas de privacidade e proteção de dados. Sua tarefa é classificar o conteúdo fornecido em uma das categorias pré-definidas.
+
       Analise o seguinte conteúdo de política de privacidade e classifique-o na categoria mais apropriada.
 
       ${title ? `TÍTULO: ${title}\n` : ''}
@@ -98,12 +82,14 @@ export class AIService {
       Por favor, responda EXATAMENTE no seguinte formato JSON:
       {
         "category": "CATEGORIA_ESCOLHIDA",
-        "confidence": 85,
+        "confidence": 85
       }
 
       Onde:
       - category: deve ser exatamente uma das categorias listadas acima
       - confidence: número de 0 a 100 indicando sua confiança na classificação
+
+      Responda apenas com o JSON, sem explicações adicionais.
     `;
   }
 
@@ -162,14 +148,10 @@ export class AIService {
         confidence: parsed.confidence
       };
     } catch (error) {
-      // eslint-disable-next-line
-      console.log(
-        `Erro ao processar resposta da IA: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      throw new AppError(
+        `Erro ao processar resposta da IA: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+        500
       );
-      return {
-        category: 'OUTROS',
-        confidence: 0
-      };
     }
   }
 
@@ -179,38 +161,5 @@ export class AIService {
 
   public getCategoryDescription(category: string): string {
     return this.getCategoryDescriptionInternal(category);
-  }
-
-  public async classifyMultipleContents(
-    contents: Array<{ content: string; title?: string; id?: string }>
-  ): Promise<Array<AIClassificationResult & { id?: string }>> {
-    const results: Array<AIClassificationResult & { id?: string }> = [];
-
-    for (const item of contents) {
-      try {
-        const result = await this.classifyPolicyContent(
-          item.content,
-          item.title
-        );
-        results.push({
-          ...result,
-          id: item.id
-        });
-
-        await delay(1000);
-      } catch (error) {
-        // eslint-disable-next-line
-        console.log(
-          `Erro ao classificar conteúdo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
-        );
-        results.push({
-          category: 'OUTROS',
-          confidence: 0,
-          id: item.id
-        });
-      }
-    }
-
-    return results;
   }
 }

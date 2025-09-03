@@ -7,7 +7,7 @@ const envSchema = z.object({
   API_PORT: z.coerce.number().default(3333),
   DATABASE_URL: z.string().default(''),
   FRONTEND_URL: z.string().default('http://localhost:8080'),
-  OPENAI_API_KEY: z.string().optional()
+  GOOGLE_AI_API_KEY: z.string().optional()
 });
 
 export const env = envSchema.parse(process.env);
