@@ -277,8 +277,7 @@ export class ScrapingService {
 
     const finalContent = meaningfulSentences.join('. ').trim();
 
-    // Limita o tamanho final
-    return finalContent.substring(0, 20000);
+    return finalContent;
   }
 
   private async handleCookieConsent(page: puppeteer.Page): Promise<void> {

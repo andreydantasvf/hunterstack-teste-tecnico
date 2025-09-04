@@ -25,8 +25,11 @@ export class IngestionService {
 
       const { title, content, method } = scrapingResult.data;
 
+      // versão reduzida para IA gastar menos
+      const contentForAI = content.substring(0, 20000);
+
       const classificationResult = await this.aiService.classifyPolicyContent(
-        content,
+        contentForAI,
         title
       );
 
