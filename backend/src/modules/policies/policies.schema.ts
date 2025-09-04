@@ -1,16 +1,13 @@
 import { z } from 'zod';
 
 export const policySchema = z.object({
-  id: z.string().uuid().optional(),
+  id: z.uuid().optional(),
   title: z
     .string()
     .min(1, 'Título é obrigatório')
     .max(500, 'Título muito longo')
     .describe('Título da política de privacidade'),
-  source_url: z
-    .string()
-    .url('URL inválida')
-    .describe('URL de origem da política'),
+  source_url: z.url('URL inválida').describe('URL de origem da política'),
   content: z
     .string()
     .min(1, 'Conteúdo é obrigatório')
@@ -29,7 +26,7 @@ export const createPolicySchema = z.object({
     .string()
     .min(1, 'Título é obrigatório')
     .max(500, 'Título muito longo'),
-  source_url: z.string().url('URL inválida'),
+  source_url: z.url('URL inválida'),
   content: z.string().min(1, 'Conteúdo é obrigatório'),
   category: z.string().min(1, 'Categoria é obrigatória'),
   method: z.enum(['axios', 'puppeteer']).optional()
@@ -41,14 +38,14 @@ export const updatePolicySchema = z.object({
     .min(1, 'Título é obrigatório')
     .max(500, 'Título muito longo')
     .optional(),
-  source_url: z.string().url('URL inválida').optional(),
+  source_url: z.url('URL inválida').optional(),
   content: z.string().min(1, 'Conteúdo é obrigatório').optional(),
   category: z.string().min(1, 'Categoria é obrigatória').optional(),
   method: z.enum(['axios', 'puppeteer']).optional()
 });
 
 export const policyIdSchema = z.object({
-  id: z.string().uuid('ID deve ser um UUID válido').describe('ID da política')
+  id: z.uuid('ID deve ser um UUID válido').describe('ID da política')
 });
 
 export const downloadQuerySchema = z.object({
@@ -91,5 +88,5 @@ export const policiesSearchResponseSchema = z.object({
 
 export const deletePolicyResponseSchema = z.object({
   success: z.literal(true).describe('Indica se a resposta foi bem-sucedida'),
-  data: null
+  data: z.null().describe('Nenhum dado retornado após exclusão')
 });
