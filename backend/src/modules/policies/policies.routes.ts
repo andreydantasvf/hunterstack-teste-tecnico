@@ -6,7 +6,9 @@ import {
   policiesSearchResponseSchema,
   policyIdSchema,
   policyResponseSchema,
-  policyQuerySchema
+  policyQuerySchema,
+  downloadQuerySchema,
+  downloadResponseSchema
 } from './policies.schema';
 
 export class PoliciesRoutes {
@@ -52,11 +54,32 @@ export class PoliciesRoutes {
           params: policyIdSchema,
           response: {
             200: policyResponseSchema,
-            400: errorResponseSchema
+            400: errorResponseSchema,
+            404: errorResponseSchema
           }
         }
       },
       (request, reply) => this.controller.getPolicyById(request, reply)
+    );
+
+    fastifyWithZod.get(
+      '/:id/download',
+      {
+        schema: {
+          tags: ['Políticas de Privacidade'],
+          summary: 'Download da política de privacidade',
+          description:
+            'Faz o download de uma política de privacidade específica em formato JSON.',
+          params: policyIdSchema,
+          querystring: downloadQuerySchema,
+          response: {
+            200: downloadResponseSchema,
+            400: errorResponseSchema,
+            404: errorResponseSchema
+          }
+        }
+      },
+      (request, reply) => this.controller.downloadPolicy(request, reply)
     );
   };
 }

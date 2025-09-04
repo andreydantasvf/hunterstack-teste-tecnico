@@ -51,10 +51,34 @@ export class PoliciesController {
     reply: FastifyReply
   ): Promise<void> {
     const { id } = request.params as { id: string };
-    const policy = this.policiesService.getPolicyById(id);
+    const policy = await this.policiesService.getPolicyById(id);
     reply.send({
       success: true,
       data: policy
     });
+  }
+
+  public async downloadPolicy(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<void> {
+    const { id } = request.params as { id: string };
+    const { format } = request.query as { format: string };
+
+    const policy = await this.policiesService.getPolicyById(id);
+
+    if (format === 'json') {
+      const filename = `policy-${policy.id}.json`;
+
+      reply
+        .header('Content-Type', 'application/json')
+        .header('Content-Disposition', `attachment; filename="${filename}"`)
+        .send(policy);
+    } else {
+      reply.status(400).send({
+        success: false,
+        error: 'Formato não suportado. Use format=json'
+      });
+    }
   }
 }

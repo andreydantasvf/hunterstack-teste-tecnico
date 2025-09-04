@@ -1,3 +1,4 @@
+import { AppError } from '@/core/webserver/app-error';
 import { PoliciesRepository } from './policies.repository';
 import {
   IPolicy,
@@ -14,11 +15,11 @@ export class PoliciesService {
   }
 
   public async createPolicy(policy: IPolicy): Promise<IPolicy> {
-    return this.repository.save(policy);
+    return await this.repository.save(policy);
   }
 
   public async getAllPolicies(): Promise<IPolicy[]> {
-    return this.repository.findAll();
+    return await this.repository.findAll();
   }
 
   public async searchPolicies(
@@ -31,21 +32,27 @@ export class PoliciesService {
       page,
       page_size
     };
-    return this.repository.search(searchParams);
+    return await this.repository.search(searchParams);
   }
 
-  public async getPolicyById(id: string): Promise<IPolicy | null> {
-    return this.repository.findById(id);
+  public async getPolicyById(id: string): Promise<IPolicy> {
+    const policy = await this.repository.findById(id);
+    if (!policy) {
+      throw new AppError('Política não encontrada', 404);
+    }
+    return policy;
   }
 
   public async updatePolicy(
     id: string,
     policy: Partial<IPolicy>
   ): Promise<IPolicy | null> {
-    return this.repository.update(id, policy);
+    await this.getPolicyById(id);
+    return await this.repository.update(id, policy);
   }
 
   public async deletePolicy(id: string): Promise<boolean> {
-    return this.repository.delete(id);
+    await this.getPolicyById(id);
+    return await this.repository.delete(id);
   }
 }

@@ -51,6 +51,14 @@ export const policyIdSchema = z.object({
   id: z.string().uuid('ID deve ser um UUID válido').describe('ID da política')
 });
 
+export const downloadQuerySchema = z.object({
+  format: z.enum(['json']).describe('Formato do arquivo para download')
+});
+
+export const downloadResponseSchema = z
+  .file()
+  .describe('Arquivo da política em formato JSON');
+
 export const policyQuerySchema = z.object({
   term: z
     .string()
