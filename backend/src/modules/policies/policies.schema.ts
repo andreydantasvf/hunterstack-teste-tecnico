@@ -55,10 +55,6 @@ export const downloadQuerySchema = z.object({
   format: z.enum(['json']).describe('Formato do arquivo para download')
 });
 
-export const downloadResponseSchema = z
-  .file()
-  .describe('Arquivo da política em formato JSON');
-
 export const policyQuerySchema = z.object({
   term: z
     .string()
@@ -79,16 +75,7 @@ export const policyResponseSchema = z.object({
 
 export const policiesListResponseSchema = z.object({
   success: z.literal(true).describe('Indica se a resposta foi bem-sucedida'),
-  data: z.array(policySchema).describe('Lista de políticas de privacidade'),
-  pagination: z
-    .object({
-      page: z.number().int().min(1),
-      limit: z.number().int().min(1),
-      total: z.number().int().min(0),
-      totalPages: z.number().int().min(0)
-    })
-    .optional()
-    .describe('Informações de paginação, se aplicável')
+  data: z.array(policySchema).describe('Lista de políticas de privacidade')
 });
 
 export const policiesSearchResponseSchema = z.object({

@@ -4,12 +4,14 @@ import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { errorResponseSchema } from '@/core/webserver/error.schema';
 import {
   policiesSearchResponseSchema,
+  policiesListResponseSchema,
   policyIdSchema,
+  policySchema,
   policyResponseSchema,
   policyQuerySchema,
-  downloadQuerySchema,
-  downloadResponseSchema
+  downloadQuerySchema
 } from './policies.schema';
+import { z } from 'zod';
 
 export class PoliciesRoutes {
   public prefix_route = '/policies';
@@ -35,7 +37,10 @@ export class PoliciesRoutes {
             'Retorna uma lista de todas as políticas de privacidade disponíveis ou filtra por termo de busca com paginação.',
           querystring: policyQuerySchema,
           response: {
-            200: policiesSearchResponseSchema,
+            200: z.union([
+              policiesListResponseSchema,
+              policiesSearchResponseSchema
+            ]),
             400: errorResponseSchema
           }
         }
@@ -73,7 +78,7 @@ export class PoliciesRoutes {
           params: policyIdSchema,
           querystring: downloadQuerySchema,
           response: {
-            200: downloadResponseSchema,
+            200: policySchema,
             400: errorResponseSchema,
             404: errorResponseSchema
           }
