@@ -9,7 +9,10 @@ import {
   policySchema,
   policyResponseSchema,
   policyQuerySchema,
-  downloadQuerySchema
+  downloadQuerySchema,
+  createPolicySchema,
+  updatePolicySchema,
+  deletePolicyResponseSchema
 } from './policies.schema';
 import { z } from 'zod';
 
@@ -85,6 +88,63 @@ export class PoliciesRoutes {
         }
       },
       (request, reply) => this.controller.downloadPolicy(request, reply)
+    );
+
+    fastifyWithZod.post(
+      '/',
+      {
+        schema: {
+          tags: ['Políticas de Privacidade'],
+          summary: 'Cria uma nova política de privacidade',
+          description:
+            'Cria uma nova política de privacidade com os dados fornecidos.',
+          body: createPolicySchema,
+          response: {
+            201: policyResponseSchema,
+            400: errorResponseSchema
+          }
+        }
+      },
+      (request, reply) => this.controller.createPolicy(request, reply)
+    );
+
+    fastifyWithZod.put(
+      '/:id',
+      {
+        schema: {
+          tags: ['Políticas de Privacidade'],
+          summary: 'Atualiza uma política de privacidade',
+          description:
+            'Atualiza uma política de privacidade existente com os dados fornecidos.',
+          params: policyIdSchema,
+          body: updatePolicySchema,
+          response: {
+            200: policyResponseSchema,
+            400: errorResponseSchema,
+            404: errorResponseSchema
+          }
+        }
+      },
+      (request, reply) => this.controller.updatePolicy(request, reply)
+    );
+
+    fastifyWithZod.delete(
+      '/:id',
+      {
+        schema: {
+          tags: ['Políticas de Privacidade'],
+          summary: 'Deleta uma política de privacidade',
+          description:
+            'Remove uma política de privacidade específica do sistema.',
+          params: policyIdSchema,
+          response: {
+            200: deletePolicyResponseSchema,
+            400: errorResponseSchema,
+            404: errorResponseSchema
+          }
+        }
+      },
+      (request, reply) => this.controller.deletePolicy(request, reply)
     );
   };
 }

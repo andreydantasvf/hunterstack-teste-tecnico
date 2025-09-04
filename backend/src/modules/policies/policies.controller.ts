@@ -1,5 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { PoliciesService } from './policies.service';
+import { IPolicy } from './policies.types';
 
 export class PoliciesController {
   private policiesService: PoliciesService;
@@ -65,20 +66,63 @@ export class PoliciesController {
     const { id } = request.params as { id: string };
     const { format } = request.query as { format: string };
 
-    const policy = await this.policiesService.getPolicyById(id);
-
-    if (format === 'json') {
-      const filename = `policy-${policy.id}.json`;
-
-      reply
-        .header('Content-Type', 'application/json')
-        .header('Content-Disposition', `attachment; filename="${filename}"`)
-        .send(policy);
-    } else {
+    if (format !== 'json') {
       reply.status(400).send({
         success: false,
         error: 'Formato não suportado. Use format=json'
       });
+      return;
     }
+
+    const policy = await this.policiesService.getPolicyById(id);
+    const filename = `policy-${policy.id}.json`;
+
+    reply
+      .header('Content-Type', 'application/json')
+      .header('Content-Disposition', `attachment; filename="${filename}"`)
+      .send(policy);
+  }
+
+  public async createPolicy(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<void> {
+    const policyData = request.body as IPolicy;
+
+    const policy = await this.policiesService.createPolicy(policyData);
+
+    reply.status(201).send({
+      success: true,
+      data: policy
+    });
+  }
+
+  public async updatePolicy(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<void> {
+    const { id } = request.params as { id: string };
+    const updateData = request.body as IPolicy;
+
+    const policy = await this.policiesService.updatePolicy(id, updateData);
+
+    reply.send({
+      success: true,
+      data: policy
+    });
+  }
+
+  public async deletePolicy(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<void> {
+    const { id } = request.params as { id: string };
+
+    await this.policiesService.deletePolicy(id);
+
+    reply.send({
+      success: true,
+      data: null
+    });
   }
 }

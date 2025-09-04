@@ -88,3 +88,8 @@ export const policiesSearchResponseSchema = z.object({
     total_pages: z.number().int().min(0).describe('Total de páginas')
   })
 });
+
+export const deletePolicyResponseSchema = z.object({
+  success: z.literal(true).describe('Indica se a resposta foi bem-sucedida'),
+  data: null
+});
