@@ -19,7 +19,8 @@
   },
   "include": [
     "./src",
-    "**/*.ts"
+    "**/*.ts",
+    "scripts/run-ingestion-service.ts"
   ],
   "exclude": [
     "./node_modules",

@@ -18,7 +18,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:db:migrate": "dotenv -e .env.test -- npx prisma migrate deploy",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "ingestion": "tsx scripts/run-ingestion-service.ts"
   },
   "keywords": [],
   "author": "",
