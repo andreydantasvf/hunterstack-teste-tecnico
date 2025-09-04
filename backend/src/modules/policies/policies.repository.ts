@@ -1,5 +1,10 @@
 import { PrismaClient } from '@prisma/client';
-import { IPolicy, IPolicyRepository } from './policies.types';
+import {
+  IPolicy,
+  IPolicyRepository,
+  IPolicySearchParams,
+  IPolicySearchResult
+} from './policies.types';
 import { DatabaseConnection } from '@/core/database/connection';
 import { AppError } from '@/core/webserver/app-error';
 
@@ -30,6 +35,45 @@ export class PoliciesRepository implements IPolicyRepository {
     try {
       const policies = await this.db.policy.findMany();
       return policies;
+    } catch (error) {
+      throw new AppError('Erro ao buscar políticas: ' + error, 500);
+    }
+  }
+
+  async search(params: IPolicySearchParams): Promise<IPolicySearchResult> {
+    try {
+      const { term, page = 1, page_size = 10 } = params;
+      const skip = (page - 1) * page_size;
+
+      const where = term
+        ? {
+            OR: [
+              { title: { contains: term, mode: 'insensitive' as const } },
+              { content: { contains: term, mode: 'insensitive' as const } },
+              { category: { contains: term, mode: 'insensitive' as const } }
+            ]
+          }
+        : {};
+
+      const [policies, total] = await Promise.all([
+        this.db.policy.findMany({
+          where,
+          skip,
+          take: page_size,
+          orderBy: { createdAt: 'desc' }
+        }),
+        this.db.policy.count({ where })
+      ]);
+
+      const total_pages = Math.ceil(total / page_size);
+
+      return {
+        policies,
+        total,
+        page,
+        page_size,
+        total_pages
+      };
     } catch (error) {
       throw new AppError('Erro ao buscar políticas: ' + error, 500);
     }

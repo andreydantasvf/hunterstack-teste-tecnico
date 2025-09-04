@@ -9,10 +9,37 @@ export class PoliciesController {
   }
 
   public async listAllPolicies(
-    _request: FastifyRequest,
+    request: FastifyRequest,
     reply: FastifyReply
   ): Promise<void> {
-    const policies = this.policiesService.getAllPolicies();
+    const query = request.query as {
+      term?: string;
+      page?: string;
+      page_size?: string;
+    };
+    const { term, page, page_size } = query;
+
+    if (term) {
+      const result = await this.policiesService.searchPolicies(
+        term,
+        page ? Number(page) : undefined,
+        page_size ? Number(page_size) : undefined
+      );
+
+      reply.send({
+        success: true,
+        data: result.policies,
+        pagination: {
+          page: result.page,
+          page_size: result.page_size,
+          total: result.total,
+          total_pages: result.total_pages
+        }
+      });
+      return;
+    }
+
+    const policies = await this.policiesService.getAllPolicies();
     reply.send({
       success: true,
       data: policies

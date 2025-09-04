@@ -52,16 +52,16 @@ export const policyIdSchema = z.object({
 });
 
 export const policyQuerySchema = z.object({
+  term: z
+    .string()
+    .optional()
+    .describe('Termo de busca para title, content ou category'),
   page: z.string().transform(Number).pipe(z.number().int().min(1)).optional(),
-  limit: z
+  page_size: z
     .string()
     .transform(Number)
     .pipe(z.number().int().min(1).max(100))
-    .optional(),
-  category: z.string().optional(),
-  search: z.string().optional(),
-  sortBy: z.enum(['title', 'createdAt', 'updatedAt', 'category']).optional(),
-  sortOrder: z.enum(['asc', 'desc']).optional()
+    .optional()
 });
 
 export const policyResponseSchema = z.object({
@@ -81,4 +81,15 @@ export const policiesListResponseSchema = z.object({
     })
     .optional()
     .describe('Informações de paginação, se aplicável')
+});
+
+export const policiesSearchResponseSchema = z.object({
+  success: z.literal(true).describe('Indica se a resposta foi bem-sucedida'),
+  data: z.array(policySchema).describe('Lista de políticas de privacidade'),
+  pagination: z.object({
+    total: z.number().int().min(0).describe('Total de políticas encontradas'),
+    page: z.number().int().min(1).describe('Página atual'),
+    page_size: z.number().int().min(1).describe('Tamanho da página'),
+    total_pages: z.number().int().min(0).describe('Total de páginas')
+  })
 });

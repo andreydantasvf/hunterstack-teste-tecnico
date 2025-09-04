@@ -3,9 +3,10 @@ import { PoliciesController } from './policies.controller';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { errorResponseSchema } from '@/core/webserver/error.schema';
 import {
-  policiesListResponseSchema,
+  policiesSearchResponseSchema,
   policyIdSchema,
-  policyResponseSchema
+  policyResponseSchema,
+  policyQuerySchema
 } from './policies.schema';
 
 export class PoliciesRoutes {
@@ -27,11 +28,12 @@ export class PoliciesRoutes {
       {
         schema: {
           tags: ['Políticas de Privacidade'],
-          summary: 'Lista todas as políticas de privacidade',
+          summary: 'Lista ou busca políticas de privacidade',
           description:
-            'Retorna uma lista de todas as políticas de privacidade disponíveis.',
+            'Retorna uma lista de todas as políticas de privacidade disponíveis ou filtra por termo de busca com paginação.',
+          querystring: policyQuerySchema,
           response: {
-            200: policiesListResponseSchema,
+            200: policiesSearchResponseSchema,
             400: errorResponseSchema
           }
         }

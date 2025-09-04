@@ -1,5 +1,10 @@
 import { PoliciesRepository } from './policies.repository';
-import { IPolicy, IPolicyRepository } from './policies.types';
+import {
+  IPolicy,
+  IPolicyRepository,
+  IPolicySearchParams,
+  IPolicySearchResult
+} from './policies.types';
 
 export class PoliciesService {
   private repository: IPolicyRepository;
@@ -14,6 +19,19 @@ export class PoliciesService {
 
   public async getAllPolicies(): Promise<IPolicy[]> {
     return this.repository.findAll();
+  }
+
+  public async searchPolicies(
+    term: string,
+    page?: number,
+    page_size?: number
+  ): Promise<IPolicySearchResult> {
+    const searchParams: IPolicySearchParams = {
+      term,
+      page,
+      page_size
+    };
+    return this.repository.search(searchParams);
   }
 
   public async getPolicyById(id: string): Promise<IPolicy | null> {
