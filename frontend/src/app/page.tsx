@@ -179,18 +179,16 @@ export default function Home() {
           ))}
         </div>
 
-        <div>
-          {/* Filters Sidebar */}
-          <div>
-            <PolicyFilters
-              filters={filters}
-              onFiltersChange={handleFiltersChange}
-              totalResults={pagination.total}
-            />
-          </div>
+        <div className="space-y-6">
+          {/* Filtros compactos */}
+          <PolicyFilters
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            totalResults={pagination.total}
+          />
 
           {/* Main Content */}
-          <div className="mt-8 space-y-6">
+          <div className="space-y-6">
             {/* Policies Grid */}
             {isLoading ? (
               <PolicyGridSkeleton />

@@ -32,8 +32,8 @@ export const PolicyFilters = ({
       try {
         const cats = await policiesApi.getCategories();
         setCategories(cats);
-      } catch (error) {
-        console.error('Error loading categories:', error);
+      } catch {
+        // Error loading categories - continue with empty array
       }
     };
     loadCategories();
@@ -64,26 +64,28 @@ export const PolicyFilters = ({
 
   return (
     <Card className="bg-gradient-card border-border">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
+      <CardContent className="p-4">
+        {/* Header compacto */}
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-medium text-foreground">Filtros</h3>
+            <span className="text-sm font-medium text-foreground">Filtros</span>
             {hasActiveFilters && (
-              <Badge variant="secondary" className="text-xs">
-                1 filtro ativo
+              <Badge variant="secondary" className="text-xs h-5">
+                1 ativo
               </Badge>
             )}
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleRefresh}
               disabled={isLoading}
+              className="h-8 w-8 p-0"
             >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
             
             {hasActiveFilters && (
@@ -91,25 +93,27 @@ export const PolicyFilters = ({
                 variant="ghost"
                 size="sm"
                 onClick={clearFilters}
+                className="h-8 px-2 text-xs"
               >
-                <X className="h-4 w-4 mr-1" />
+                <X className="h-3.5 w-3.5 mr-1" />
                 Limpar
               </Button>
             )}
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-2 block">
+        {/* Filtros em layout horizontal compacto */}
+        <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+          <div className="flex-1 min-w-0">
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
               Categoria
             </label>
             <Select 
               value={filters.category || 'all'} 
               onValueChange={handleCategoryChange}
             >
-              <SelectTrigger className="bg-background border-input-border">
-                <SelectValue placeholder="Selecione uma categoria" />
+              <SelectTrigger className="bg-background border-input-border h-9">
+                <SelectValue placeholder="Todas as categorias" />
               </SelectTrigger>
               <SelectContent className="bg-popover">
                 <SelectItem value="all">Todas as categorias</SelectItem>
@@ -122,13 +126,12 @@ export const PolicyFilters = ({
             </Select>
           </div>
 
-          <div className="pt-2 border-t border-border">
-            <div className="flex justify-between items-center text-xs text-muted-foreground">
-              <span>Total de resultados:</span>
-              <Badge variant="outline" className="text-xs">
-                {totalResults}
-              </Badge>
-            </div>
+          {/* Total de resultados compacto */}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground sm:pb-1">
+            <span className="whitespace-nowrap">Total:</span>
+            <Badge variant="outline" className="text-xs h-6 px-2">
+              {totalResults}
+            </Badge>
           </div>
         </div>
       </CardContent>
