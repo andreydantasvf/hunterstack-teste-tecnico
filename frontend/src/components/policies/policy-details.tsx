@@ -1,5 +1,6 @@
 import { type Policy } from '@/lib/schemas';
 import { useDownloadPolicy, useCopyPolicy } from '@/hooks/use-policies';
+import { getCategoryColor } from '@/lib/constants';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -28,18 +29,6 @@ interface PolicyDetailsProps {
   onEdit: (policy: Policy) => void;
   onDelete: (policy: Policy) => void;
 }
-
-const getCategoryColor = (category: string) => {
-  const colors: Record<string, string> = {
-    'Tech Giant': 'bg-primary-light text-primary',
-    'E-commerce': 'bg-accent-light text-accent',
-    'Entertainment': 'bg-warning-light text-warning',
-    'Financial': 'bg-destructive-light text-destructive',
-    'Healthcare': 'bg-secondary text-secondary-foreground',
-    'Social Media': 'bg-muted text-muted-foreground',
-  };
-  return colors[category] || 'bg-muted text-muted-foreground';
-};
 
 export const PolicyDetails = ({ policy, isOpen, onClose, onEdit, onDelete }: PolicyDetailsProps) => {
   const downloadPolicyMutation = useDownloadPolicy();

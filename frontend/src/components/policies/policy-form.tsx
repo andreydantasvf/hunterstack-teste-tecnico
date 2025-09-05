@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createPolicySchema, updatePolicySchema, type CreatePolicyRequest, type UpdatePolicyRequest, type Policy } from '@/lib/schemas';
-import { useCategories, useCreatePolicy, useUpdatePolicy } from '@/hooks/use-policies';
+import { useCreatePolicy, useUpdatePolicy } from '@/hooks/use-policies';
+import { POLICY_CATEGORIES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -41,7 +42,6 @@ export const PolicyForm = ({
   onClose,
   policy
 }: PolicyFormProps) => {
-  const { data: categories = [] } = useCategories();
   const createPolicyMutation = useCreatePolicy();
   const updatePolicyMutation = useUpdatePolicy();
 
@@ -54,7 +54,7 @@ export const PolicyForm = ({
       title: '',
       source_url: '',
       content: '',
-      category: ''
+      category: 'OUTROS'
     }
   });
 
@@ -72,7 +72,7 @@ export const PolicyForm = ({
           title: '',
           source_url: '',
           content: '',
-          category: '',
+          category: 'OUTROS',
         });
       }
     }
@@ -156,20 +156,11 @@ export const PolicyForm = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories.map((category) => (
+                      {POLICY_CATEGORIES.map((category) => (
                         <SelectItem key={category} value={category}>
                           {category}
                         </SelectItem>
                       ))}
-                      <SelectItem value="Tech Giant">Tech Giant</SelectItem>
-                      <SelectItem value="E-commerce">E-commerce</SelectItem>
-                      <SelectItem value="Entertainment">Entertainment</SelectItem>
-                      <SelectItem value="Social Media">Social Media</SelectItem>
-                      <SelectItem value="Financial">Financial</SelectItem>
-                      <SelectItem value="Healthcare">Healthcare</SelectItem>
-                      <SelectItem value="Education">Education</SelectItem>
-                      <SelectItem value="Government">Government</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

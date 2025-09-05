@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { POLICY_CATEGORIES_ARRAY } from './constants';
 
 export const policySchema = z.object({
   id: z.string().uuid(),
@@ -8,7 +9,7 @@ export const policySchema = z.object({
     .max(500, 'Título muito longo'),
   source_url: z.string().url('URL inválida'),
   content: z.string().min(1, 'Conteúdo é obrigatório'),
-  category: z.string().min(1, 'Categoria é obrigatória'),
+  category: z.enum(POLICY_CATEGORIES_ARRAY),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
   method: z.enum(['axios', 'puppeteer']).optional()
@@ -21,7 +22,7 @@ export const createPolicySchema = z.object({
     .max(500, 'Título muito longo'),
   source_url: z.string().url('URL inválida'),
   content: z.string().min(1, 'Conteúdo é obrigatório'),
-  category: z.string().min(1, 'Categoria é obrigatória'),
+  category: z.enum(POLICY_CATEGORIES_ARRAY),
   method: z.enum(['axios', 'puppeteer']).optional()
 });
 
@@ -33,7 +34,7 @@ export const updatePolicySchema = z.object({
     .optional(),
   source_url: z.string().url('URL inválida').optional(),
   content: z.string().min(1, 'Conteúdo é obrigatório').optional(),
-  category: z.string().min(1, 'Categoria é obrigatória').optional(),
+  category: z.enum(POLICY_CATEGORIES_ARRAY).optional(),
   method: z.enum(['axios', 'puppeteer']).optional()
 });
 
