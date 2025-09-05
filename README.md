@@ -181,10 +181,10 @@ cd backend
 npm run ingestion  # Executa script de captura de políticas
 ```
 
-## 📚 Documentação Adicional
+## 📚 Aplicação em produção
 
-- **[📖 Backend README](./backend/README.md)** - Documentação técnica completa da API
-- **[🎨 Frontend README](./frontend/README.md)** - Documentação técnica completa da interface
+- **[📖 Documentação da API](https://hunterstack-teste-tecnico.onrender.com/docs/)** - Documentação técnica completa da API
+- **[🎨 Frontend da aplicação](https://hunterstackpoliciesmanager.vercel.app/)** - Documentação técnica completa da interface
 
 ## 📄 Licença
 
