@@ -44,7 +44,7 @@ export const policiesApi = {
   ): Promise<PoliciesListResponse | PoliciesSearchResponse> {
     const params = new URLSearchParams();
 
-    if (filters.term) params.append('term', filters.term);
+    params.append('term', filters.term || '');
     if (filters.page) params.append('page', filters.page.toString());
     if (filters.page_size)
       params.append('page_size', filters.page_size.toString());
