@@ -1,4 +1,5 @@
-import { Policy } from '@/types/policy';
+import { type Policy } from '@/lib/schemas';
+import { useDownloadPolicy, useCopyPolicy } from '@/hooks/use-policies';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -14,18 +15,18 @@ import {
   Download,
   Edit,
   Copy,
-  Check
+  Trash2,
+  Loader2
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useState } from 'react';
-import { toast } from 'sonner';
 
 interface PolicyDetailsProps {
   policy: Policy | null;
   isOpen: boolean;
   onClose: () => void;
   onEdit: (policy: Policy) => void;
+  onDelete: (policy: Policy) => void;
 }
 
 const getCategoryColor = (category: string) => {
@@ -40,36 +41,22 @@ const getCategoryColor = (category: string) => {
   return colors[category] || 'bg-muted text-muted-foreground';
 };
 
-export const PolicyDetails = ({ policy, isOpen, onClose, onEdit }: PolicyDetailsProps) => {
-  const [copied, setCopied] = useState(false);
+export const PolicyDetails = ({ policy, isOpen, onClose, onEdit, onDelete }: PolicyDetailsProps) => {
+  const downloadPolicyMutation = useDownloadPolicy();
+  const copyPolicyMutation = useCopyPolicy();
 
   if (!policy) return null;
 
-  const handleCopyContent = async () => {
-    try {
-      await navigator.clipboard.writeText(policy.content);
-      setCopied(true);
-      toast("Conteúdo copiado para a área de transferência.");
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast("Não foi possível copiar o conteúdo.");
-    }
-  };
-
   const handleDownload = () => {
-    const dataStr = JSON.stringify(policy, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${policy.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    toast("O arquivo foi baixado com sucesso.");
+    downloadPolicyMutation.mutate({ id: policy.id });
   };
+
+  const handleCopy = () => {
+    copyPolicyMutation.mutate(policy);
+  };
+
+  const createdAt = policy.createdAt ? new Date(policy.createdAt) : new Date();
+  const updatedAt = policy.updatedAt ? new Date(policy.updatedAt) : new Date();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -97,46 +84,59 @@ export const PolicyDetails = ({ policy, isOpen, onClose, onEdit }: PolicyDetails
                 variant="outline"
                 size="sm"
                 onClick={handleDownload}
+                disabled={downloadPolicyMutation.isPending}
               >
-                <Download className="h-4 w-4 mr-2" />
+                {downloadPolicyMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" />
+                )}
                 Download
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopy}
+                disabled={copyPolicyMutation.isPending}
+              >
+                {copyPolicyMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Copy className="h-4 w-4 mr-2" />
+                )}
+                Copiar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onDelete(policy)}
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Deletar
               </Button>
             </div>
           </div>
+        </DialogHeader>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
-            <div className="flex items-start gap-2 text-sm min-w-0">
-              <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-              <div className="min-w-0 flex-1">
-                <p className="text-muted-foreground mb-1">URL da Fonte</p>
-                <a
-                  href={policy.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline block truncate text-sm"
-                  title={policy.source_url}
-                >
-                  {policy.source_url}
-                </a>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2 text-sm">
-              <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+        <div className="space-y-6 pt-2">
+          {/* Metadata */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/30">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="text-muted-foreground mb-1">Criado em</p>
-                <p className="font-medium">
-                  {format(new Date(policy.createdAt), 'dd/MM/yyyy', { locale: ptBR })}
+                <p className="text-sm font-medium">Criado em</p>
+                <p className="text-sm text-muted-foreground">
+                  {format(createdAt, 'dd/MM/yyyy', { locale: ptBR })}
                 </p>
               </div>
             </div>
-
-            <div className="flex items-start gap-2 text-sm">
-              <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="text-muted-foreground mb-1">Última atualização</p>
-                <p className="font-medium">
-                  {formatDistanceToNow(new Date(policy.updatedAt), {
+                <p className="text-sm font-medium">Atualizado</p>
+                <p className="text-sm text-muted-foreground">
+                  {formatDistanceToNow(updatedAt, {
                     addSuffix: true,
                     locale: ptBR
                   })}
@@ -144,37 +144,41 @@ export const PolicyDetails = ({ policy, isOpen, onClose, onEdit }: PolicyDetails
               </div>
             </div>
           </div>
-        </DialogHeader>
 
-        <Separator />
-
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-foreground">Conteúdo da Política</h3>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopyContent}
-            >
-              {copied ? (
-                <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Copiado!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copiar
-                </>
-              )}
-            </Button>
+          {/* Source URL */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-muted-foreground" />
+              <h3 className="font-semibold">URL da Fonte</h3>
+            </div>
+            <div className="flex items-center gap-2 p-3 rounded bg-muted/50">
+              <a
+                href={policy.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 text-sm text-primary hover:underline break-all"
+              >
+                {policy.source_url}
+              </a>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.open(policy.source_url, '_blank')}
+              >
+                <Globe className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
-          <div className="prose prose-sm max-w-none">
-            <div className="bg-muted/30 rounded-lg p-6 border border-border">
-              <pre className="whitespace-pre-wrap text-sm leading-relaxed text-foreground font-sans">
-                {policy.content}
-              </pre>
+          <Separator />
+
+          {/* Content */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">Conteúdo da Política</h3>
+            </div>
+            <div className="max-h-96 overflow-y-auto p-4 rounded-lg bg-muted/30 text-sm leading-relaxed whitespace-pre-wrap">
+              {policy.content}
             </div>
           </div>
         </div>

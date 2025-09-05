@@ -1,4 +1,5 @@
-import { Policy } from '@/types/policy';
+import { type Policy } from '@/lib/schemas';
+import { useDeletePolicy } from '@/hooks/use-policies';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,23 +16,25 @@ interface DeletePolicyDialogProps {
   policy: Policy | null;
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (policy: Policy) => Promise<void>;
-  isLoading?: boolean;
 }
 
 export const DeletePolicyDialog = ({ 
   policy, 
   isOpen, 
-  onClose, 
-  onConfirm, 
-  isLoading = false 
+  onClose
 }: DeletePolicyDialogProps) => {
+  const deletePolicyMutation = useDeletePolicy();
+
   if (!policy) return null;
 
   const handleConfirm = async () => {
-    await onConfirm(policy);
-    onClose();
+    if (policy.id) {
+      await deletePolicyMutation.mutateAsync(policy.id);
+      onClose();
+    }
   };
+
+  const isLoading = deletePolicyMutation.isPending;
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
@@ -43,7 +46,7 @@ export const DeletePolicyDialog = ({
           </AlertDialogTitle>
           <AlertDialogDescription className="text-muted-foreground">
             Tem certeza que deseja deletar a política{' '}
-            <span className="font-semibold text-foreground">"{policy.title}"</span>?
+            <span className="font-semibold text-foreground">&ldquo;{policy.title}&rdquo;</span>?
             <br />
             <br />
             Esta ação não pode ser desfeita e todos os dados relacionados serão permanentemente removidos.

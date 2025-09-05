@@ -1,76 +1,83 @@
 'use client';
+
+import { useState, useEffect, useCallback } from 'react';
 import { Header } from "@/components/layout/Header";
 import { DeletePolicyDialog } from "@/components/policies/delete-policy-dialog";
 import { PolicyCard } from "@/components/policies/policy-card";
 import { PolicyDetails } from "@/components/policies/policy-details";
-import { PolicyFilters } from "@/components/policies/policy-filters";
 import { PolicyForm } from "@/components/policies/policy-form";
 import { PolicyGridSkeleton } from "@/components/policies/policy-skeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { policiesApi } from "@/lib/api";
-import { Policy, PolicyFilters as FilterType, CreatePolicyRequest } from '@/types/policy';
-import { ChevronLeft, ChevronRight, Clock, FileText, TrendingUp } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { usePolicies } from '@/hooks/use-policies';
+import { useDebounce } from '@/hooks/use-debounce';
+import { type Policy, type PolicyFilters } from '@/lib/schemas';
+import { Clock, FileText, TrendingUp } from "lucide-react";
+import { useSearchParams, useRouter } from 'next/navigation';
 
 export default function Home() {
-  const [policies, setPolicies] = useState<Policy[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [filters, setFilters] = useState<FilterType>({ page: 1, limit: 9 });
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 9,
-    total: 0,
-    totalPages: 0
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const initialPage = parseInt(searchParams.get('page') || '1');
+  const initialTerm = searchParams.get('term') || '';
+
+  const [searchValue, setSearchValue] = useState(initialTerm);
+  
+  const [filters, setFilters] = useState<PolicyFilters>({
+    page: initialPage,
+    page_size: 9,
+    term: initialTerm
   });
 
-  // Modal states
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const debouncedSearchValue = useDebounce(searchValue, 500);
+
   const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load policies
-  const loadPolicies = async (newFilters?: FilterType) => {
-    try {
-      setIsLoading(true);
-      const currentFilters = newFilters || filters;
-      const response = await policiesApi.getPolicies(currentFilters);
-      setPolicies(response.data);
-      if (response.pagination) {
-        setPagination(response.pagination);
-      }
-    } catch (error) {
-      console.error('Error loading policies:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    data: policiesResponse,
+    isLoading,
+    error
+  } = usePolicies(filters);
+
+  const updateFilters = useCallback((newFilters: Partial<PolicyFilters>) => {
+    const updatedFilters = { ...filters, ...newFilters };
+    setFilters(updatedFilters);
+
+    const params = new URLSearchParams();
+    if (updatedFilters.term) params.set('term', updatedFilters.term);
+    if (updatedFilters.page && updatedFilters.page > 1) params.set('page', updatedFilters.page.toString());
+
+    const newUrl = params.toString() ? `?${params.toString()}` : '/';
+    router.push(newUrl, { scroll: false });
+  }, [filters, router]);
 
   useEffect(() => {
-    loadPolicies();
-  }, []);
+    if (debouncedSearchValue !== filters.term) {
+      updateFilters({ term: debouncedSearchValue, page: 1 });
+    }
+  }, [debouncedSearchValue, filters.term, updateFilters]);
 
-  // Handle filter changes
-  const handleFiltersChange = (newFilters: FilterType) => {
-    setFilters(newFilters);
-    loadPolicies(newFilters);
+  const handleSearch = (term: string) => {
+    setSearchValue(term);
   };
 
-  // Handle search
-  const handleSearch = (search: string) => {
-    const newFilters = { ...filters, search, page: 1 };
-    handleFiltersChange(newFilters);
-  };
-
-  // Handle pagination
   const handlePageChange = (page: number) => {
-    const newFilters = { ...filters, page };
-    handleFiltersChange(newFilters);
+    updateFilters({ page });
   };
 
-  // Handle policy actions
   const handleAddPolicy = () => {
     setSelectedPolicy(null);
     setIsFormOpen(true);
@@ -91,187 +98,253 @@ export default function Home() {
     setIsDeleteOpen(true);
   };
 
-  // Handle form submission
-  const handleFormSubmit = async (data: CreatePolicyRequest) => {
-    try {
-      setIsSubmitting(true);
-
-      if (selectedPolicy) {
-        await policiesApi.updatePolicy(selectedPolicy.id, data);
-
-      } else {
-        await policiesApi.createPolicy(data);
-
-      }
-
-      loadPolicies();
-      setIsFormOpen(false);
-    } catch (error) {
-      console.error('Error submitting form:', error);
-
-    } finally {
-      setIsSubmitting(false);
+  const renderPagination = () => {
+    if (!policiesResponse || !('pagination' in policiesResponse) || !policiesResponse.pagination) {
+      return null;
     }
+
+    const { page, total_pages } = policiesResponse.pagination;
+
+    if (total_pages <= 1) return null;
+
+    // Calculate which pages to show
+    let startPage = Math.max(1, page - 2);
+    let endPage = Math.min(total_pages, page + 2);
+
+    // Adjust if we're near the beginning or end
+    if (page <= 3) {
+      endPage = Math.min(5, total_pages);
+    }
+    if (page >= total_pages - 2) {
+      startPage = Math.max(total_pages - 4, 1);
+    }
+
+    return (
+      <div className="flex justify-center mt-8">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (page > 1) handlePageChange(page - 1);
+                }}
+                className={page <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+
+            {startPage > 1 && (
+              <>
+                <PaginationItem>
+                  <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePageChange(1);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    1
+                  </PaginationLink>
+                </PaginationItem>
+                {startPage > 2 && <PaginationEllipsis />}
+              </>
+            )}
+
+            {Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map((pageNum) => (
+              <PaginationItem key={pageNum}>
+                <PaginationLink
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handlePageChange(pageNum);
+                  }}
+                  isActive={pageNum === page}
+                  className="cursor-pointer"
+                >
+                  {pageNum}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+
+            {endPage < total_pages && (
+              <>
+                {endPage < total_pages - 1 && <PaginationEllipsis />}
+                <PaginationItem>
+                  <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePageChange(total_pages);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    {total_pages}
+                  </PaginationLink>
+                </PaginationItem>
+              </>
+            )}
+
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (page < total_pages) handlePageChange(page + 1);
+                }}
+                className={page >= total_pages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+    );
   };
 
-  // Handle delete confirmation
-  const handleDeleteConfirm = async (policy: Policy) => {
-    try {
-      setIsSubmitting(true);
-      await policiesApi.deletePolicy(policy.id);
+  const totalPolicies = policiesResponse && 'pagination' in policiesResponse ?
+    policiesResponse.pagination?.total :
+    policiesResponse?.data?.length || 0;
 
-      loadPolicies();
-    } catch (error) {
-      console.error('Error deleting policy:', error);
+  const policies = policiesResponse?.data || [];
 
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-background">
+        <Header
+          onSearch={handleSearch}
+          onAddPolicy={handleAddPolicy}
+          searchValue={searchValue}
+        />
+        <main className="container mx-auto px-6 py-8">
+          <Card className="text-center p-8">
+            <CardHeader>
+              <CardTitle className="text-destructive">Erro ao carregar políticas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                {error instanceof Error ? error.message : 'Erro desconhecido'}
+              </p>
+              <Button onClick={() => window.location.reload()}>
+                Tentar novamente
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
 
-  const stats = [
-    {
-      title: "Total de Políticas",
-      value: pagination.total,
-      icon: FileText,
-      color: "text-primary"
-    },
-    {
-      title: "Categorias",
-      value: new Set(policies.map(p => p.category)).size,
-      icon: TrendingUp,
-      color: "text-accent"
-    },
-    {
-      title: "Atualizadas Hoje",
-      value: policies.filter(p => {
-        const today = new Date();
-        const updated = new Date(p.updatedAt);
-        return today.toDateString() === updated.toDateString();
-      }).length,
-      icon: Clock,
-      color: "text-warning"
-    }
-  ];
   return (
     <div className="min-h-screen bg-gradient-surface">
       <Header
         onSearch={handleSearch}
         onAddPolicy={handleAddPolicy}
-        searchValue={filters.search || ''}
+        searchValue={searchValue}
       />
 
       <main className="container mx-auto px-6 py-8">
-        {/* Stats Cards */}
+        {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <Card key={index} className="bg-gradient-card border-border hover:shadow-glow transition-all duration-300">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.title}
-                </CardTitle>
-                <stat.icon className={`h-4 w-4 ${stat.color}`} />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+          <Card className="bg-gradient-card border-border hover:shadow-glow transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total de Políticas
+              </CardTitle>
+              <FileText className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">{totalPolicies}</div>
+            </CardContent>
+          </Card>
 
-        <div className="space-y-6">
-          {/* Filtros compactos */}
-          <PolicyFilters
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-            totalResults={pagination.total}
-          />
-
-          {/* Main Content */}
-          <div className="space-y-6">
-            {/* Policies Grid */}
-            {isLoading ? (
-              <PolicyGridSkeleton />
-            ) : policies.length === 0 ? (
-              <div className="text-center py-12">
-                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  Nenhuma política encontrada
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  {filters.search || filters.category
-                    ? 'Tente ajustar seus filtros de busca.'
-                    : 'Comece criando sua primeira política.'}
-                </p>
-                <Button onClick={handleAddPolicy} className="bg-gradient-primary hover:bg-primary-hover">
-                  Criar Nova Política
-                </Button>
+          <Card className="bg-gradient-card border-border hover:shadow-glow transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Políticas Recentes
+              </CardTitle>
+              <Clock className="h-4 w-4 text-accent" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">
+                {policies.filter(p => {
+                  const date = new Date(p.updatedAt || p.createdAt || '');
+                  const now = new Date();
+                  const daysDiff = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24);
+                  return daysDiff <= 7;
+                }).length}
               </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {policies.map((policy) => (
-                    <PolicyCard
-                      key={policy.id}
-                      policy={policy}
-                      onView={handleViewPolicy}
-                      onEdit={handleEditPolicy}
-                      onDelete={handleDeletePolicy}
-                    />
-                  ))}
-                </div>
+            </CardContent>
+          </Card>
 
-                {/* Pagination */}
-                {pagination.totalPages > 1 && (
-                  <div className="flex items-center justify-center space-x-2 pt-6">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(pagination.page - 1)}
-                      disabled={pagination.page === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4 mr-1" />
-                      Anterior
-                    </Button>
-
-                    <div className="flex items-center space-x-1">
-                      {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
-                        <Button
-                          key={page}
-                          variant={page === pagination.page ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handlePageChange(page)}
-                          className={page === pagination.page ? "bg-gradient-primary" : ""}
-                        >
-                          {page}
-                        </Button>
-                      ))}
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(pagination.page + 1)}
-                      disabled={pagination.page === pagination.totalPages}
-                    >
-                      Próxima
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+          <Card className="bg-gradient-card border-border hover:shadow-glow transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Categorias Únicas
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-warning" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">
+                {new Set(policies.map(p => p.category)).size}
+              </div>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Search Results Info */}
+        {filters.term && (
+          <div className="mb-6">
+            <p className="text-muted-foreground">
+              {isLoading ? 'Buscando...' : `${totalPolicies} resultado(s) encontrado(s) para "${filters.term}"`}
+            </p>
+          </div>
+        )}
+
+        {/* Policies Grid */}
+        {isLoading ? (
+          <PolicyGridSkeleton />
+        ) : policies.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {policies.map((policy) => (
+                <PolicyCard
+                  key={policy.id}
+                  policy={policy}
+                  onView={handleViewPolicy}
+                  onEdit={handleEditPolicy}
+                  onDelete={handleDeletePolicy}
+                />
+              ))}
+            </div>
+            {renderPagination()}
+          </>
+        ) : (
+          <Card className="text-center p-8">
+            <CardHeader>
+              <CardTitle>Nenhuma política encontrada</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                {filters.term
+                  ? `Não foram encontradas políticas que correspondam ao termo "${filters.term}".`
+                  : 'Ainda não há políticas cadastradas.'
+                }
+              </p>
+              <Button onClick={handleAddPolicy}>
+                <FileText className="h-4 w-4 mr-2" />
+                Adicionar Primeira Política
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </main>
 
       {/* Modals */}
       <PolicyForm
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        onSubmit={handleFormSubmit}
         policy={selectedPolicy}
-        isLoading={isSubmitting}
       />
 
       <PolicyDetails
@@ -279,14 +352,13 @@ export default function Home() {
         isOpen={isDetailsOpen}
         onClose={() => setIsDetailsOpen(false)}
         onEdit={handleEditPolicy}
+        onDelete={handleDeletePolicy}
       />
 
       <DeletePolicyDialog
         policy={selectedPolicy}
         isOpen={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}
-        onConfirm={handleDeleteConfirm}
-        isLoading={isSubmitting}
       />
     </div>
   );

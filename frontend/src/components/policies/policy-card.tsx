@@ -1,4 +1,5 @@
-import { Policy } from '@/types/policy';
+import { type Policy } from '@/lib/schemas';
+import { useDownloadPolicy, useCopyPolicy } from '@/hooks/use-policies';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,8 @@ import {
   Download,
   ExternalLink,
   Calendar,
-  Globe
+  Globe,
+  Copy
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -42,6 +44,19 @@ const getCategoryColor = (category: string) => {
 };
 
 export const PolicyCard = ({ policy, onView, onEdit, onDelete }: PolicyCardProps) => {
+  const downloadPolicyMutation = useDownloadPolicy();
+  const copyPolicyMutation = useCopyPolicy();
+
+  const handleDownload = () => {
+    if (policy.id) {
+      downloadPolicyMutation.mutate({ id: policy.id });
+    }
+  };
+
+  const handleCopy = () => {
+    copyPolicyMutation.mutate(policy);
+  };
+
   return (
     <Card className="group bg-gradient-card border-border hover:border-primary/20 hover:shadow-glow transition-all duration-300">
       <CardHeader className="pb-3">
@@ -53,7 +68,7 @@ export const PolicyCard = ({ policy, onView, onEdit, onDelete }: PolicyCardProps
               </Badge>
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                {formatDistanceToNow(new Date(policy.updatedAt), {
+                {formatDistanceToNow(new Date(policy.updatedAt || policy.createdAt || new Date()), {
                   addSuffix: true,
                   locale: ptBR
                 })}
@@ -82,9 +97,21 @@ export const PolicyCard = ({ policy, onView, onEdit, onDelete }: PolicyCardProps
                 <Edit className="mr-2 h-4 w-4" />
                 Editar
               </DropdownMenuItem>
-              <DropdownMenuItem className='cursor-pointer'>
+              <DropdownMenuItem 
+                className='cursor-pointer' 
+                onClick={handleDownload}
+                disabled={downloadPolicyMutation.isPending}
+              >
                 <Download className="mr-2 h-4 w-4" />
                 Download
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className='cursor-pointer' 
+                onClick={handleCopy}
+                disabled={copyPolicyMutation.isPending}
+              >
+                <Copy className="mr-2 h-4 w-4" />
+                Copiar
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

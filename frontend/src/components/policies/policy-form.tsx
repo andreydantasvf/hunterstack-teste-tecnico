@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Policy, CreatePolicyRequest } from '@/types/policy';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { createPolicySchema, updatePolicySchema, type CreatePolicyRequest, type UpdatePolicyRequest, type Policy } from '@/lib/schemas';
+import { useCategories, useCreatePolicy, useUpdatePolicy } from '@/hooks/use-policies';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -18,223 +20,202 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Loader2, Save, X } from 'lucide-react';
-import { policiesApi } from '@/lib/api';
 
 interface PolicyFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: CreatePolicyRequest) => Promise<void>;
   policy?: Policy | null;
-  isLoading?: boolean;
 }
 
-export const PolicyForm = ({ 
-  isOpen, 
-  onClose, 
-  onSubmit, 
-  policy, 
-  isLoading = false 
+export const PolicyForm = ({
+  isOpen,
+  onClose,
+  policy
 }: PolicyFormProps) => {
-  const [formData, setFormData] = useState<CreatePolicyRequest>({
-    title: '',
-    source_url: '',
-    content: '',
-    category: ''
+  const { data: categories = [] } = useCategories();
+  const createPolicyMutation = useCreatePolicy();
+  const updatePolicyMutation = useUpdatePolicy();
+
+  const isEditing = !!policy;
+  const schema = isEditing ? updatePolicySchema : createPolicySchema;
+
+  const form = useForm<CreatePolicyRequest | UpdatePolicyRequest>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      title: '',
+      source_url: '',
+      content: '',
+      category: ''
+    }
   });
-  const [categories, setCategories] = useState<string[]>([]);
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (policy) {
-      setFormData({
-        title: policy.title,
-        source_url: policy.source_url,
-        content: policy.content,
-        category: policy.category
-      });
-    } else {
-      setFormData({
-        title: '',
-        source_url: '',
-        content: '',
-        category: ''
-      });
-    }
-    setErrors({});
-  }, [policy, isOpen]);
-
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const cats = await policiesApi.getCategories();
-        setCategories(cats);
-      } catch (error) {
-        console.error('Error loading categories:', error);
-      }
-    };
-    loadCategories();
-  }, []);
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.title.trim()) {
-      newErrors.title = 'Título é obrigatório';
-    }
-
-    if (!formData.source_url.trim()) {
-      newErrors.source_url = 'URL da fonte é obrigatória';
-    } else {
-      try {
-        new URL(formData.source_url);
-      } catch {
-        newErrors.source_url = 'URL inválida';
+    if (isOpen) {
+      if (policy) {
+        form.reset({
+          title: policy.title,
+          source_url: policy.source_url,
+          content: policy.content,
+          category: policy.category
+        });
+      } else {
+        form.reset({
+          title: '',
+          source_url: '',
+          content: '',
+          category: '',
+        });
       }
     }
+  }, [isOpen, policy, form]);
 
-    if (!formData.content.trim()) {
-      newErrors.content = 'Conteúdo é obrigatório';
-    }
-
-    if (!formData.category) {
-      newErrors.category = 'Categoria é obrigatória';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
-
+  const onSubmit = async (data: CreatePolicyRequest | UpdatePolicyRequest) => {
     try {
-      await onSubmit(formData);
+      if (isEditing && policy?.id) {
+        await updatePolicyMutation.mutateAsync({
+          id: policy.id,
+          data: data as UpdatePolicyRequest
+        });
+      } else {
+        await createPolicyMutation.mutateAsync(data as CreatePolicyRequest);
+      }
       onClose();
-    } catch (error) {
-      console.error('Error submitting form:', error);
+    } catch {
+      // Error handling is done in the hooks
     }
   };
 
-  const handleInputChange = (field: keyof CreatePolicyRequest, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
+  const isLoading = createPolicyMutation.isPending || updatePolicyMutation.isPending;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-background max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">
-            {policy ? 'Editar Política' : 'Nova Política'}
+          <DialogTitle className="flex items-center gap-2">
+            <Save className="h-5 w-5" />
+            {isEditing ? 'Editar Política' : 'Nova Política'}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <Label htmlFor="title" className="text-sm font-medium">
-                Título *
-              </Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
-                placeholder="Digite o título da política"
-                className={`bg-background border-input-border ${errors.title ? 'border-destructive' : ''}`}
-              />
-              {errors.title && (
-                <p className="text-xs text-destructive mt-1">{errors.title}</p>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Título *</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Digite o título da política..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
-
-            <div>
-              <Label htmlFor="source_url" className="text-sm font-medium">
-                URL da Fonte *
-              </Label>
-              <Input
-                id="source_url"
-                type="url"
-                value={formData.source_url}
-                onChange={(e) => handleInputChange('source_url', e.target.value)}
-                placeholder="https://exemplo.com/politica"
-                className={`bg-background border-input-border ${errors.source_url ? 'border-destructive' : ''}`}
-              />
-              {errors.source_url && (
-                <p className="text-xs text-destructive mt-1">{errors.source_url}</p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="category" className="text-sm font-medium">
-                Categoria *
-              </Label>
-              <Select 
-                value={formData.category} 
-                onValueChange={(value) => handleInputChange('category', value)}
-              >
-                <SelectTrigger className={`bg-background border-input-border ${errors.category ? 'border-destructive' : ''}`}>
-                  <SelectValue placeholder="Selecione uma categoria" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.category && (
-                <p className="text-xs text-destructive mt-1">{errors.category}</p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="content" className="text-sm font-medium">
-              Conteúdo *
-            </Label>
-            <Textarea
-              id="content"
-              value={formData.content}
-              onChange={(e) => handleInputChange('content', e.target.value)}
-              placeholder="Cole o conteúdo da política de privacidade aqui..."
-              rows={8}
-              className={`bg-background border-input-border resize-none ${errors.content ? 'border-destructive' : ''}`}
             />
-            {errors.content && (
-              <p className="text-xs text-destructive mt-1">{errors.content}</p>
-            )}
-          </div>
 
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isLoading}
-            >
-              <X className="h-4 w-4 mr-2" />
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="bg-gradient-primary hover:bg-primary-hover"
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
+            <FormField
+              control={form.control}
+              name="source_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>URL da Fonte *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="url"
+                      placeholder="https://exemplo.com/privacy-policy"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-              {policy ? 'Atualizar' : 'Criar'} Política
-            </Button>
-          </DialogFooter>
-        </form>
+            />
+
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Categoria *</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma categoria" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="Tech Giant">Tech Giant</SelectItem>
+                      <SelectItem value="E-commerce">E-commerce</SelectItem>
+                      <SelectItem value="Entertainment">Entertainment</SelectItem>
+                      <SelectItem value="Social Media">Social Media</SelectItem>
+                      <SelectItem value="Financial">Financial</SelectItem>
+                      <SelectItem value="Healthcare">Healthcare</SelectItem>
+                      <SelectItem value="Education">Education</SelectItem>
+                      <SelectItem value="Government">Government</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="content"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Conteúdo *</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Cole aqui o conteúdo da política de privacidade..."
+                      className="min-h-32 resize-y"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isLoading}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                {isEditing ? 'Atualizar' : 'Criar'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
