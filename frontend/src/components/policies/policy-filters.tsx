@@ -51,7 +51,7 @@ export const PolicyFilters = ({
 
   const clearFilters = () => {
     onFiltersChange({
-      search: filters.search,
+      term: filters.term,
       page: 1
     });
   };

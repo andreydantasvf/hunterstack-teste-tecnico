@@ -85,4 +85,5 @@ export interface PolicyFilters {
   term?: string;
   page?: number;
   page_size?: number;
+  category?: string;
 }
