@@ -21,8 +21,9 @@ import {
 import { usePolicies } from '@/hooks/use-policies';
 import { useDebounce } from '@/hooks/use-debounce';
 import { type Policy, type PolicyFilters } from '@/lib/schemas';
-import { Clock, FileText, TrendingUp } from "lucide-react";
+import { Clock, FileText, TrendingUp, Search, Plus } from "lucide-react";
 import { useSearchParams, useRouter } from 'next/navigation';
+import { Input } from "@/components/ui/input";
 
 export default function Home() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function Home() {
   const initialTerm = searchParams.get('term') || '';
 
   const [searchValue, setSearchValue] = useState(initialTerm);
-  
+
   const [filters, setFilters] = useState<PolicyFilters>({
     page: initialPage,
     page_size: 9,
@@ -243,9 +244,22 @@ export default function Home() {
         searchValue={searchValue}
       />
 
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-4 sm:px-6 py-8 pb-20 md:pb-8">
+        {/* Mobile Search Bar */}
+        <div className="md:hidden mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar políticas..."
+              value={searchValue}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="pl-10 bg-background border-input focus:border-primary"
+            />
+          </div>
+        </div>
+
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
           <Card className="bg-gradient-card border-border hover:shadow-glow transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -306,7 +320,7 @@ export default function Home() {
           <PolicyGridSkeleton />
         ) : policies.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {policies.map((policy) => (
                 <PolicyCard
                   key={policy.id}
@@ -320,18 +334,18 @@ export default function Home() {
             {renderPagination()}
           </>
         ) : (
-          <Card className="text-center p-8">
+          <Card className="text-center p-6 sm:p-8">
             <CardHeader>
               <CardTitle>Nenhuma política encontrada</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-muted-foreground mb-4 text-sm sm:text-base">
                 {filters.term
                   ? `Não foram encontradas políticas que correspondam ao termo "${filters.term}".`
                   : 'Ainda não há políticas cadastradas.'
                 }
               </p>
-              <Button onClick={handleAddPolicy}>
+              <Button onClick={handleAddPolicy} className="w-full sm:w-auto">
                 <FileText className="h-4 w-4 mr-2" />
                 Adicionar Primeira Política
               </Button>
@@ -360,6 +374,15 @@ export default function Home() {
         isOpen={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}
       />
+
+      {/* Floating Action Button for Mobile */}
+      <Button
+        onClick={handleAddPolicy}
+        className="md:hidden fixed bottom-6 right-6 h-14 w-14 rounded-full bg-gradient-primary hover:bg-primary/90 shadow-glow shadow-lg z-50 transition-all duration-300 hover:scale-110 active:scale-95"
+        size="icon"
+      >
+        <Plus className="h-6 w-6" />
+      </Button>
     </div>
   );
 }

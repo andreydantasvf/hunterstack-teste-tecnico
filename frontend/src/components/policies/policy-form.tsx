@@ -107,7 +107,7 @@ export const PolicyForm = ({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
             <FormField
               control={form.control}
               name="title"
@@ -186,7 +186,7 @@ export const PolicyForm = ({
                   <FormControl>
                     <Textarea
                       placeholder="Cole aqui o conteúdo da política de privacidade..."
-                      className="min-h-32 resize-y"
+                      className="min-h-24 sm:min-h-32 resize-y"
                       {...field}
                     />
                   </FormControl>
@@ -195,17 +195,18 @@ export const PolicyForm = ({
               )}
             />
 
-            <DialogFooter className="gap-2">
+            <DialogFooter className="gap-2 flex-col sm:flex-row">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
                 disabled={isLoading}
+                className="w-full sm:w-auto"
               >
                 <X className="h-4 w-4 mr-2" />
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (

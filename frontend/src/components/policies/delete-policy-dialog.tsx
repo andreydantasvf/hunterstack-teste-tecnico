@@ -18,9 +18,9 @@ interface DeletePolicyDialogProps {
   onClose: () => void;
 }
 
-export const DeletePolicyDialog = ({ 
-  policy, 
-  isOpen, 
+export const DeletePolicyDialog = ({
+  policy,
+  isOpen,
   onClose
 }: DeletePolicyDialogProps) => {
   const deletePolicyMutation = useDeletePolicy();
@@ -38,28 +38,28 @@ export const DeletePolicyDialog = ({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent className="bg-background">
+      <AlertDialogContent className="bg-background max-w-md sm:max-w-lg">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-            <Trash2 className="h-5 w-5" />
+            <Trash2 className="h-5 w-5 flex-shrink-0" />
             Deletar Política
           </AlertDialogTitle>
           <AlertDialogDescription className="text-muted-foreground">
             Tem certeza que deseja deletar a política{' '}
-            <span className="font-semibold text-foreground">&ldquo;{policy.title}&rdquo;</span>?
+            <span className="font-semibold text-foreground break-words">&ldquo;{policy.title}&rdquo;</span>?
             <br />
             <br />
             Esta ação não pode ser desfeita e todos os dados relacionados serão permanentemente removidos.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>
+        <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+          <AlertDialogCancel disabled={isLoading} className="w-full sm:w-auto">
             Cancelar
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
             disabled={isLoading}
-            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            className="w-full sm:w-auto bg-destructive hover:bg-destructive/90 text-destructive-foreground"
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
