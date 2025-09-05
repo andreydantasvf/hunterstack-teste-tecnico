@@ -20,7 +20,7 @@ export class PoliciesController {
     };
     const { term, page, page_size } = query;
 
-    if (term) {
+    if (term || term === '') {
       const result = await this.policiesService.searchPolicies(
         term,
         page ? Number(page) : undefined,

@@ -41,8 +41,8 @@ export class PoliciesRoutes {
           querystring: policyQuerySchema,
           response: {
             200: z.union([
-              policiesListResponseSchema,
-              policiesSearchResponseSchema
+              policiesSearchResponseSchema,
+              policiesListResponseSchema
             ]),
             400: errorResponseSchema
           }
