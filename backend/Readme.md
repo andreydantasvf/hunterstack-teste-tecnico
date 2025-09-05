@@ -180,14 +180,7 @@ O script vem configurado com as seguintes políticas de privacidade:
 
 ### Demonstração em Vídeo
 
-**📹 [ESPAÇO RESERVADO PARA VÍDEO DEMONSTRATIVO]**
-
-*Aqui será inserido um vídeo demonstrando:*
-- *Execução do script de ingestão*
-- *Processo de scraping em tempo real*
-- *Classificação pela IA*
-- *Resultados salvos no banco de dados*
-- *Consulta dos dados via API*
+![](../.github/scraping-demo.mp4)
 
 **⚠️ Importante**: O script de scraping e análise por IA **não está disponível em produção** para evitar custos elevados com as APIs de inteligência artificial. Em ambiente de produção, os dados são previamente processados e inseridos manualmente no banco de dados.
 
