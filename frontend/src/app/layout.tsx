@@ -30,7 +30,7 @@ export default function RootLayout({
         <QueryClientProvider client={queryClient}>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
+            defaultTheme="dark"
             enableSystem
             disableTransitionOnChange
             storageKey="hunterstack-theme"
