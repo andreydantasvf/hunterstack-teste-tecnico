@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { Header } from "@/components/layout/Header";
 import { DeletePolicyDialog } from "@/components/policies/delete-policy-dialog";
 import { PolicyCard } from "@/components/policies/policy-card";
@@ -25,7 +25,7 @@ import { Clock, FileText, TrendingUp, Search, Plus } from "lucide-react";
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Input } from "@/components/ui/input";
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -384,5 +384,13 @@ export default function Home() {
         <Plus className="h-6 w-6" />
       </Button>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<PolicyGridSkeleton />}>
+      <HomeContent />
+    </Suspense>
   );
 }
