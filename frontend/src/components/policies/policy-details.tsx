@@ -8,10 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { 
-  ExternalLink, 
-  Calendar, 
-  Globe, 
+import {
+  Calendar,
+  Globe,
   Download,
   Edit,
   Copy,
@@ -20,7 +19,7 @@ import {
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface PolicyDetailsProps {
   policy: Policy | null;
@@ -43,7 +42,6 @@ const getCategoryColor = (category: string) => {
 
 export const PolicyDetails = ({ policy, isOpen, onClose, onEdit }: PolicyDetailsProps) => {
   const [copied, setCopied] = useState(false);
-  const { toast } = useToast();
 
   if (!policy) return null;
 
@@ -51,17 +49,10 @@ export const PolicyDetails = ({ policy, isOpen, onClose, onEdit }: PolicyDetails
     try {
       await navigator.clipboard.writeText(policy.content);
       setCopied(true);
-      toast({
-        title: "Copiado!",
-        description: "Conteúdo copiado para a área de transferência.",
-      });
+      toast("Conteúdo copiado para a área de transferência.");
       setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível copiar o conteúdo.",
-        variant: "destructive",
-      });
+    } catch {
+      toast("Não foi possível copiar o conteúdo.");
     }
   };
 
@@ -77,16 +68,13 @@ export const PolicyDetails = ({ policy, isOpen, onClose, onEdit }: PolicyDetails
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    toast({
-      title: "Download iniciado",
-      description: "O arquivo foi baixado com sucesso.",
-    });
+    toast("O arquivo foi baixado com sucesso.");
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-background max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="space-y-4">
+        <DialogHeader className="space-y-4 pt-4">
           <div className="flex items-start justify-between">
             <div className="flex-1 space-y-2">
               <Badge className={getCategoryColor(policy.category)}>
@@ -117,44 +105,40 @@ export const PolicyDetails = ({ policy, isOpen, onClose, onEdit }: PolicyDetails
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
-            <div className="flex items-center gap-2 text-sm">
-              <Globe className="h-4 w-4 text-muted-foreground" />
-              <div className="flex-1">
-                <p className="text-muted-foreground">URL da Fonte</p>
-                <a 
-                  href={policy.source_url} 
-                  target="_blank" 
+            <div className="flex items-start gap-2 text-sm min-w-0">
+              <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <p className="text-muted-foreground mb-1">URL da Fonte</p>
+                <a
+                  href={policy.source_url}
+                  target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary hover:underline truncate block"
+                  className="text-primary hover:underline block truncate text-sm"
+                  title={policy.source_url}
                 >
                   {policy.source_url}
                 </a>
               </div>
-              <Button variant="ghost" size="sm" asChild>
-                <a href={policy.source_url} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              </Button>
             </div>
 
-            <div className="flex items-center gap-2 text-sm">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-start gap-2 text-sm">
+              <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-muted-foreground">Criado em</p>
+                <p className="text-muted-foreground mb-1">Criado em</p>
                 <p className="font-medium">
                   {format(new Date(policy.createdAt), 'dd/MM/yyyy', { locale: ptBR })}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 text-sm">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-start gap-2 text-sm">
+              <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-muted-foreground">Última atualização</p>
+                <p className="text-muted-foreground mb-1">Última atualização</p>
                 <p className="font-medium">
-                  {formatDistanceToNow(new Date(policy.updatedAt), { 
-                    addSuffix: true, 
-                    locale: ptBR 
+                  {formatDistanceToNow(new Date(policy.updatedAt), {
+                    addSuffix: true,
+                    locale: ptBR
                   })}
                 </p>
               </div>
@@ -185,7 +169,7 @@ export const PolicyDetails = ({ policy, isOpen, onClose, onEdit }: PolicyDetails
               )}
             </Button>
           </div>
-          
+
           <div className="prose prose-sm max-w-none">
             <div className="bg-muted/30 rounded-lg p-6 border border-border">
               <pre className="whitespace-pre-wrap text-sm leading-relaxed text-foreground font-sans">

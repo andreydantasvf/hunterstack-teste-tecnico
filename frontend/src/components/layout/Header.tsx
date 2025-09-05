@@ -51,7 +51,7 @@ export const Header = ({ onSearch, onAddPolicy, searchValue }: HeaderProps) => {
 
         {/* Actions */}
         <div className="flex items-center space-x-2">
-          <Button 
+          <Button
             onClick={onAddPolicy}
             className="bg-gradient-primary hover:bg-primary/90 shadow-glow"
           >
@@ -92,7 +92,7 @@ export const Header = ({ onSearch, onAddPolicy, searchValue }: HeaderProps) => {
                 <span>Configurações</span>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <div className="flex items-center justify-between w-full px-2 py-1.5 cursor-pointer">
+                <div onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="flex items-center justify-between w-full px-2 py-1.5 cursor-pointer">
                   <div className="flex items-center">
                     {theme === 'dark' ? (
                       <Moon className="mr-2 h-4 w-4" />
