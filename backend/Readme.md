@@ -180,7 +180,7 @@ O script vem configurado com as seguintes políticas de privacidade:
 
 ### Demonstração em Vídeo
 
-![](../.github/scraping-demo.mp4)
+https://github.com/user-attachments/assets/fb5f3e7f-8aaa-4e8f-9022-8b2086645ae3
 
 **⚠️ Importante**: O script de scraping e análise por IA **não está disponível em produção** para evitar custos elevados com as APIs de inteligência artificial. Em ambiente de produção, os dados são previamente processados e inseridos manualmente no banco de dados.
 
