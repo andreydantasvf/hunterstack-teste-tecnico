@@ -19,8 +19,7 @@
   },
   "include": [
     "./src",
-    "**/*.ts",
-    "scripts/run-ingestion-service.ts"
+    "**/*.ts"
   ],
   "exclude": [
     "./node_modules",
@@ -30,6 +29,7 @@
     "**/tests/**/*",
     "**/test/**/*",
     "**/__tests__/**/*",
-    "./vitest.config.ts"
+    "./vitest.config.ts",
+    "./scripts"
   ]
 }
