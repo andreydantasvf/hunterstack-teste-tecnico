@@ -21,8 +21,8 @@ interface HeaderProps {
 export const Header = ({ onSearch, onAddPolicy, searchValue }: HeaderProps) => {
   const { theme, setTheme } = useTheme();
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-gradient-surface backdrop-blur supports-[backdrop-filter]:bg-[hsl(var(--background)/0.6)]">
-      <div className="container flex h-16 items-center justify-between px-6">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-gradient-surface backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container max-w-7xl mx-auto flex h-16 items-center justify-between px-6">
         {/* Logo and Title */}
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
@@ -30,8 +30,8 @@ export const Header = ({ onSearch, onAddPolicy, searchValue }: HeaderProps) => {
               <span className="text-white font-bold text-sm">HS</span>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-[hsl(var(--foreground))]">HunterStack</h1>
-              <p className="text-xs text-[hsl(var(--muted-foreground))]">Policies Manager</p>
+              <h1 className="text-xl font-bold text-foreground">HunterStack</h1>
+              <p className="text-xs text-muted-foreground">Policies Manager</p>
             </div>
           </div>
         </div>
@@ -39,12 +39,12 @@ export const Header = ({ onSearch, onAddPolicy, searchValue }: HeaderProps) => {
         {/* Search Bar */}
         <div className="flex-1 max-w-md mx-8">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[hsl(var(--muted-foreground))]" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar políticas..."
               value={searchValue}
               onChange={(e) => onSearch(e.target.value)}
-              className="pl-10 bg-[hsl(var(--background))] border-[hsl(var(--input-border))] focus:border-[hsl(var(--primary))]"
+              className="pl-10 bg-background border-input focus:border-primary"
             />
           </div>
         </div>
@@ -53,7 +53,7 @@ export const Header = ({ onSearch, onAddPolicy, searchValue }: HeaderProps) => {
         <div className="flex items-center space-x-2">
           <Button 
             onClick={onAddPolicy}
-            className="bg-gradient-primary hover:bg-[hsl(var(--primary-hover))] shadow-glow"
+            className="bg-gradient-primary hover:bg-primary/90 shadow-glow"
           >
             <Plus className="h-4 w-4 mr-2" />
             Nova Política
@@ -67,17 +67,17 @@ export const Header = ({ onSearch, onAddPolicy, searchValue }: HeaderProps) => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">
+                  <AvatarFallback className="bg-primary text-primary-foreground">
                     AD
                   </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 bg-[hsl(var(--popover))]" align="end" forceMount>
+            <DropdownMenuContent className="w-56 bg-popover" align="end" forceMount>
               <div className="flex items-center justify-start gap-2 p-2">
                 <div className="flex flex-col space-y-1 leading-none">
                   <p className="font-medium">Admin User</p>
-                  <p className="w-[200px] truncate text-sm text-[hsl(var(--muted-foreground))]">
+                  <p className="w-[200px] truncate text-sm text-muted-foreground">
                     admin@hunterstack.com
                   </p>
                 </div>
